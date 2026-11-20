@@ -1,0 +1,17 @@
+{
+  "name": "champion-challenger",
+  "owner": {
+    "name": "w3pe8xmk"
+  },
+  "metadata": {
+    "description": "champion-challenger: a head-to-head comparison skill for Claude Code",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "champion-challenger",
+      "description": "Pick the best of several candidates by head-to-head rounds with a swap-order judge.",
+      "source": "./"
+    }
+  ]
+}
