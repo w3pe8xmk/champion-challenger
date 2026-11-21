@@ -1,7 +1,7 @@
 {
   "name": "champion-challenger",
   "version": "0.1.0",
-  "description": "Compare candidates one at a time in head-to-head rounds, keep the winner as champion, and stop after N straight wins. A separate judge process decides twice with the order swapped.",
+  "description": "Compare candidates one at a time in head-to-head rounds, keep the winner as champion, and stop after N straight wins. A read-only judge subagent (Sonnet, low effort) judges each round.",
   "author": {
     "name": "w3pe8xmk",
     "url": "https://github.com/w3pe8xmk"

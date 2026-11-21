@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "champion-challenger",
-      "description": "Pick the best of several candidates by head-to-head rounds with a swap-order judge.",
+      "description": "Pick the best of several candidates by head-to-head rounds judged by a read-only Sonnet subagent.",
       "source": "./"
     }
   ]
