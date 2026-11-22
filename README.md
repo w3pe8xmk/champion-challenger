@@ -2,29 +2,29 @@
 
 [日本語](README_JA.md)
 
-A Claude Code skill based on the **champion-challenger** method: it pits candidate improvements (challengers) against the current version (champion) one at a time in head-to-head rounds, and adopts the final winner.
+A Claude Code skill based on the **champion-challenger** method: it pits candidate improvements (challengers) against the current version (champion) one at a time in head-to-head rounds, replacing the champion only when a challenger wins and adopting the final winner.
 
-Simply asking Claude to "generate a few ideas and pick the best one" often leads to drifting criteria or bias. This skill keeps comparisons consistent through **fixed criteria, a blind judge, and a bias toward keeping the current champion**. Use it to narrow down UI copy, prompts, designs, names, performance improvements, and similar options.
+Simply asking Claude to "generate a few ideas and pick the best one" often leads to drifting criteria or bias. This skill keeps comparisons consistent through **fixed criteria, a blind pairwise LLM-as-a-Judge, and a bias toward keeping the current champion**. Use it to narrow down UI copy, prompts, designs, names, performance improvements, and similar options.
 
 ## What it does
 
 1. Takes the current implementation as the first champion. If there is none, it uses the candidate you specify.
-2. Proposes one-line outlines of candidates that differ in direction, and asks you to confirm them.
-3. Turns each outline into a concrete challenger one at a time and compares it with the champion. When numeric metrics exist, results are decided by measurement; otherwise, the blind judge agent `cc-judge` decides once per round without seeing candidate names or which is current. The challenger is promoted only if it wins; a draw keeps the champion.
-4. Ends when the champion reaches N consecutive wins (light 3 / standard 5 / strict 7) or hits the round cap (`N×3`). A losing candidate with a tunable weakness gets one retry after fixing that weakness.
+2. Proposes, in one message with recommended values, the evaluation axes (measured axes such as cost and speed, judged axes such as accuracy and quality), their priority order, and one-line outlines of candidates that differ in direction. You only correct what you disagree with.
+3. Turns each outline into a concrete challenger one at a time and compares it with the champion. Measured axes are decided by measurement; judged axes are decided by the blind judge agent `cc-judge` once per round, without seeing candidate names or which is current. Per-axis results (win +1 / draw 0 / loss −1) are multiplied by weights derived from your priority order and summed. The challenger is promoted only if the total is positive and the guard axis (accuracy by default) has not worsened beyond its tolerance; a tie or draw keeps the champion.
+4. Ends when the champion reaches N consecutive wins (light 2 / standard 4 / strict 6) or hits the round cap (light 5 / standard 13 / strict 28, i.e. 1.5× the expected number of rounds to reach N wins). A losing candidate with a tunable weakness gets one retry after fixing that weakness.
 5. If a candidate beat the current implementation, asks for your approval before implementing it, then implements and verifies it.
 
-The judging criteria and comparison conditions are fixed before the start and never changed midway. Logs are saved under `docs/log/` if that directory exists, or to `tmp/<theme>/log.md` otherwise.
+The evaluation axes, weights, and comparison conditions are fixed before the start and never changed midway. Logs are saved to `tmp/champion-challenger/<theme>/log.md`. Move them elsewhere if you want to keep them.
 
 ## Example match log
 
 Rounds and takeaways are recorded in a Markdown table using the [log-template.md](skills/champion-challenger/log-template.md) format:
 
-| Matchup | Winner | Reason | Weakness / Takeaway | Loss kind | Streak |
-| --- | --- | --- | --- | --- | --- |
-| Current / A: Split error into cause + next action | A | Immediately clear what the user should do next | Current only states the cause, not the fix | policy | 1 |
-| A / B: Bullet list + links | A | Too much information clutters the UI | Packed too many items in | tunable (hold) | 2 |
-| A / B': Trimmed to 2 bullets | B' | Stays concise while making steps clearer | A's steps feel slightly cramped in one sentence | policy | 1 |
+| Matchup | Winner | Per-axis result and total | Reason | Weakness / Takeaway | Loss kind | Streak |
+| --- | --- | --- | --- | --- | --- | --- |
+| Current / A: Split error into cause + next action | A | Clarity win (+1) / Length loss (−1) / total +0.5 | Immediately clear what the user should do next | Current only states the cause, not the fix | policy | 1 |
+| A / B: Bullet list + links | A | Clarity loss (−1) / Length loss (−1) / total −1 | Too much information clutters the UI | Packed too many items in | tunable (hold) | 2 |
+| A / B': Trimmed to 2 bullets | B' | Clarity win (+1) / Length win (+1) / total +1 | Stays concise while making steps clearer | A's steps feel slightly cramped in one sentence | policy | 1 |
 
 ## Installation
 
@@ -57,12 +57,12 @@ Restart Claude Code after adding `cc-judge.md`, as it is not loaded until restar
 Manual invocation only. Claude never triggers it automatically; it runs only when you invoke the command.
 
 ```text
-/champion-challenger <theme> [light|standard|strict, or N wins in a row]
+/champion-challenger <theme> [light|standard|strict]
 ```
 
-The strictness keywords are Japanese (`軽め` = light, `標準` = standard, `厳密` = strict). Free text such as "5 wins in a row" also works.
+The strictness keywords are Japanese (`軽め` = light, `標準` = standard, `厳密` = strict).
 
-- Examples: `/champion-challenger test run time reduction 軽め` / `/champion-challenger test run time reduction 5連勝`
+- Examples: `/champion-challenger test run time reduction 軽め` / `/champion-challenger test run time reduction 厳密`
 - If you omit the theme, the skill infers it from the preceding conversation and asks you to confirm. If you omit the strictness, it defaults to standard.
 - Token usage is high because it runs multiple rounds. Trying `軽め` (light) first is recommended.
 
